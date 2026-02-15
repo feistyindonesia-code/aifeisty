@@ -1,302 +1,153 @@
-# AI Feisty
+# AI FEISTY - Islamic AI Chat Application
 
-A modern, minimalist frontend for AI chat application. Built with HTML, Tailwind CSS, and Vanilla JavaScript.
+**Modern Frontend + Google Apps Script Backend + RAG System**
 
-## Features
+## 🎯 Quick Start (20 minutes)
 
-✨ Modern SaaS design
-🔐 Secure authentication with Google Apps Script backend
-💬 Real-time chat interface
-📱 Fully responsive (mobile-first)
-🚀 Ready for GitHub Pages deployment
-⚡ No framework dependencies - pure vanilla JS
-🎨 Beautiful animations and loading states
-📍 Auto-scroll chat messages
-🛡️ No API keys stored in frontend
-
-## Project Structure
-
+### 1. Backend Setup
 ```
-AI Feisty/
-├── index.html           # Login & Register page
-├── chat.html            # Chat interface
-├── js/
-│   └── app.js           # All JavaScript logic
-├── css/
-│   └── style.css        # Custom CSS & animations
-└── README.md            # This file
+1. Create Google Spreadsheet
+2. Copy SPREADSHEET_ID from URL
+3. Open Apps Script: Tools > Apps Script
+4. Copy Code.gs content
+5. Update SPREADSHEET_ID in line 5
+6. Run: initializeSpreadsheet()
+7. Get OpenAI API key from platform.openai.com
+8. Run: setAPIKey() with your API key
+9. Deploy: Deploy > New Deployment > Web app
+10. Copy deployment URL
 ```
 
-## Setup
-
-### 1. Clone or Download
-
-```bash
-git clone https://github.com/yourusername/feisty-ai.git
-cd feisty-ai
+### 2. Frontend Setup
+```
+1. Update GAS_API_URL in app.js (line 2)
+2. Push to GitHub
+3. Enable GitHub Pages (Settings > Pages)
 ```
 
-### 2. Configure API Endpoint
+### 3. Done!
+- Visit your GitHub Pages URL
+- Register → Login → Chat
 
-Edit `js/app.js` and replace `YOUR_GAS_DEPLOYMENT_ID`:
+## 📁 File Structure
 
-```javascript
-const GAS_API_URL = 'https://script.google.com/macros/d/YOUR_GAS_DEPLOYMENT_ID/usercontent';
+```
+📁 aifeisty/
+├── index.html ..................... Login/Register page
+├── chat.html ...................... Chat interface
+├── app.js ......................... Frontend JavaScript
+├── style.css ...................... Custom styling
+├── Code.gs ........................ Backend (Google Apps Script)
+├── HelperFunctions.gs ........... Helper functions
+├── 404.html ....................... GitHub Pages routing
+├── .gitignore ..................... Security
+└── README.md ...................... This file
 ```
 
-### 3. Test Locally
+## ✨ Features
 
-```bash
-# Using Python 3
-python -m http.server 8000
+✅ **Authentication**
+- Register with email/password
+- Login with verification
+- Session management via localStorage
 
-# Or using Node.js
-npx http-server
-```
+✅ **Chat**
+- Real-time AI responses
+- Message history (last 5 messages)
+- Auto-scroll to latest message
 
-Visit `http://localhost:8000`
+✅ **Security**
+- SHA-256 password hashing
+- API key in PropertiesService (secure)
+- CORS headers
+- XSS prevention
 
-## Deploy to GitHub Pages
+✅ **Islamic AI**
+- RAG system (search relevant dalil)
+- Anti-hallucination system prompt
+- Daily limit (10 messages/day free)
+- References from Quran & Hadith
 
-### 1. Create GitHub Repository
+✅ **UX/Design**
+- Modern minimalist interface (ChatGPT-style)
+- Mobile responsive
+- Smooth animations
+- Error handling
 
-```bash
+## 🗂️ How to Upload to GitHub
+
+### Option 1: Web Upload (Simple)
+1. Go to https://github.com/feistyindonesia-code/aifeisty
+2. Click "Add file" > "Upload files"
+3. Drag & drop all project files
+4. Commit
+
+### Option 2: Git Command
+```powershell
+cd e:\FeistyAI
+rm -r .git
 git init
 git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/yourusername/feisty-ai.git
+git commit -m "Initial commit: AI Feisty"
 git branch -M main
+git remote add origin https://[TOKEN]@github.com/feistyindonesia-code/aifeisty.git
 git push -u origin main
 ```
 
-### 2. Enable GitHub Pages
+## 🔐 Setup Security Notes
 
-- Go to Settings → Pages
-- Select `main` branch as source
-- Your site will be live at `https://yourusername.github.io/feisty-ai`
-
-### 3. Update Environment
-
-Update the API_URL in production if needed.
-
-## API Integration
-
-This frontend sends requests to a Google Apps Script backend:
-
-### Login Request
-
-```javascript
-POST /
-Content-Type: application/json
-
-{
-  "action": "login",
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-// Response
-{
-  "success": true,
-  "user_id": "user123"
-}
-```
-
-### Register Request
-
-```javascript
-POST /
-Content-Type: application/json
-
-{
-  "action": "register",
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-// Response
-{
-  "success": true,
-  "message": "Account created"
-}
-```
-
-### Chat Request
-
-```javascript
-POST /
-Content-Type: application/json
-
-{
-  "action": "chat",
-  "user_id": "user123",
-  "message": "Hello AI"
-}
-
-// Response
-{
-  "success": true,
-  "response": "Hello! How can I help?"
-}
-```
-
-## Security Notes
-
-✅ API keys are never stored in the frontend
-✅ All sensitive operations happen on the backend
-✅ Passwords are sent over HTTPS (when deployed with HTTPS)
-✅ Authentication tokens stored securely (localStorage with user_id reference)
-✅ HTML escaping prevents XSS attacks
-✅ Input validation on client-side for UX
-✅ Email validation formats
-
-### Best Practices
-
+- Do NOT hardcode API keys in code
+- Store API key in Google Apps Script PropertiesService
 - Always use HTTPS in production
-- Keep the backend API private and secure
-- Implement rate limiting on the backend
-- Use secure password hashing on the backend
-- Add CORS headers on the backend as needed
-- Monitor for suspicious activity
+- Enable GitHub Pages HTTPS
 
-## Browser Support
+## 📚 Documentation
 
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers
+- **BACKEND_SETUP.md** - Step-by-step backend guide
+- **API_REFERENCE.md** - Complete API documentation
 
-## Technologies Used
+## 🚀 Deploy & Enable GitHub Pages
 
-- **HTML5** - Semantic markup
-- **Tailwind CSS 3** - CDN-based styling
-- **Vanilla JavaScript** - No framework
-- **Google Apps Script** - Backend (recommended)
+1. Push code to GitHub
+2. Go to Settings > Pages
+3. Select "main" branch
+4. Your site is live at:
+   `https://[username].github.io/aifeisty/`
 
-## Features Breakdown
+## 🛠️ Technologies
 
-### Authentication
+- **Frontend**: HTML5, Tailwind CSS, Vanilla JavaScript
+- **Backend**: Google Apps Script, Google Sheets
+- **AI**: OpenAI API (gpt-4o-mini)
+- **Hosting**: GitHub Pages (frontend), Google Apps Script (backend)
 
-- ✅ Login with email/password
-- ✅ Register new account
-- ✅ Session persistence with localStorage
-- ✅ Auto-redirect based on auth state
-- ✅ Logout functionality
-- ✅ Form validation
+## 📊 Spreadsheet Structure
 
-### Chat
+### Sheet: USERS
+- user_id, email, password_hash, role, daily_count, last_reset
 
-- ✅ Send messages
-- ✅ Receive AI responses
-- ✅ Auto-scroll to latest message
-- ✅ Loading animations
-- ✅ Error handling
-- ✅ Daily limit handling
-- ✅ Responsive chat bubbles
-- ✅ Enter to send (Shift+Enter for newline)
+### Sheet: CHATS  
+- user_id, role, message, timestamp
 
-### UI/UX
+### Sheet: DALIL
+- id, sumber, referensi, teks, kata_kunci
 
-- ✅ Modern minimalist design
-- ✅ Mobile-first responsive
-- ✅ Smooth animations
-- ✅ Loading indicators
-- ✅ Error messages
-- ✅ Textarea auto-resize
-- ✅ Clean typography
-- ✅ Consistent spacing
+## 🎓 Setup Costs
 
-## Customization
+- **Frontend**: FREE (GitHub Pages)
+- **Backend**: FREE (Google Apps Script)
+- **Database**: FREE (Google Sheets)
+- **AI API**: ~$0.01 per chat with gpt-4o-mini
+- **Custom Domain**: Optional ($12/year)
 
-### Change Colors
+Total: FREE tier available!
 
-Edit Tailwind classes:
-- Primary: Change `blue-600` to desired color
-- Secondary: Change `green-600` to desired color
-- Backgrounds: Change `bg-white`, `bg-gray-100`
+## ❓ Need Help?
 
-### Adjust Chat Bubble Size
-
-In `app.js`, modify the `max-w-xs sm:max-w-md` classes:
-
-```javascript
-// Larger bubbles
-max-w-sm sm:max-w-xl
-```
-
-### Add Logo
-
-Replace the "F" in the header with:
-
-```html
-<img src="logo.png" alt="Logo" class="w-10 h-10">
-```
-
-## Troubleshooting
-
-### Not connecting to backend?
-
-- Check the `GAS_API_URL` is correct
-- Ensure backend is deployed and public
-- Check browser console for errors
-
-### Messages not sending?
-
-- Verify user_id is in localStorage
-- Check network tab for request/response
-- Ensure backend is responding
-
-### Styling issues?
-
-- Clear browser cache
-- Make sure Tailwind CDN is loaded
-- Check for CSS conflicts
-
-## Development Tips
-
-### Debug Mode
-
-Open browser console (F12) to see:
-- Network requests
-- Error messages
-- Authentication status
-
-### Test Data
-
-Use temporary test accounts during development.
-
-### Local Testing
-
-```bash
-# Simple server
-python -m http.server 8000
-
-# Watch for changes
-npm install -g live-server
-live-server
-```
-
-## License
-
-MIT - Feel free to use for personal or commercial projects
-
-## Support
-
-For issues or questions:
-1. Check the troubleshooting section
-2. Review browser console errors
-3. Verify backend API is working
-4. Check GitHub Issues
-
-## Changelog
-
-### Version 1.0
-- Initial release
-- Login & Register
-- Chat interface
-- Responsive design
-- GitHub Pages ready
+Check documentation files included in repo.
 
 ---
 
-Made with ❤️ for modern web development
+**Status**: ✅ Production Ready  
+**Version**: 1.0  
+**License**: MIT

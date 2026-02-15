@@ -1,32 +1,29 @@
-# Security - Never commit API keys or sensitive data
+# .gitignore - Security & Cleanup
+
+# Environment variables
 .env
 .env.local
 .env.*.local
 
-# Dependencies
-node_modules/
-package-lock.json
-yarn.lock
-
-# IDE
+# Secret files
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 .DS_Store
 
-# Build
+# Large folders
+node_modules/
 dist/
 build/
 
-# Logs
+# Temporary files
 *.log
-npm-debug.log*
+*.swp
+*.swo
+*~
 
-# OS
+# IDE
 Thumbs.db
+.project
 
-# Sensitive
-config.json
-secrets/
+# Do NOT ignore
+!.gitignore

@@ -1,323 +1,276 @@
-# AI FEISTY - BACKEND SETUP GUIDE
+# BACKEND GOOGLE APPS SCRIPT - Setup Guide
 
-Google Apps Script Backend untuk AI Islami dengan RAG dan Daily Limit
+## 🚀 Step-by-Step Setup (15 minutes)
 
-## 📋 Struktur Spreadsheet
-
-### Sheet: USERS
-```
-| user_id | email | password_hash | role | daily_count | last_reset |
-|---------|-------|---------------|------|-------------|------------|
-| user_123... | user@email.com | [SHA256_HASH] | free | 5 | 2026-02-15 |
-```
-
-**Penjelasan:**
-- `user_id`: ID unik (generated otomatis)
-- `email`: Email user (unik)
-- `password_hash`: SHA-256 hash dari password
-- `role`: "free" atau "premium" (untuk future expansion)
-- `daily_count`: Jumlah chat hari ini (reset otomatis setiap hari baru)
-- `last_reset`: Tanggal terakhir reset (format: YYYY-MM-DD)
-
-### Sheet: CHATS
-```
-| user_id | role | message | timestamp |
-|---------|------|---------|-----------|
-| user_123... | user | Apa itu wudhu? | 2026-02-15T10:30:00Z |
-| user_123... | assistant | Wudhu adalah... | 2026-02-15T10:30:15Z |
-```
-
-**Penjelasan:**
-- `user_id`: ID user yang chat
-- `role`: "user" atau "assistant"
-- `message`: Konten pesan
-- `timestamp`: ISO format timestamp
-
-### Sheet: DALIL
-```
-| id | sumber | referensi | teks | kata_kunci |
-|----|--------|-----------|------|------------|
-| 1 | Alquran | Al-Baqarah: 183 | Walakum fi as-siyami... | puasa, ibadah, kesehatan |
-| 2 | Hadis Riwayat Bukhari | Shahih Bukhari 1 | Innamal a'malu bi-niyyah | niat, amal, ibadah |
-```
-
-**Penjelasan:**
-- `id`: ID unik referensi
-- `sumber`: Sumber (Alquran, Hadis, Tafsir, dll)
-- `referensi`: Ayat/Hadis yang dikutip
-- `teks`: Teks lengkap dalil
-- `kata_kunci`: Keywords untuk search (dipisah dengan koma)
-
-## 🚀 STEP-BY-STEP SETUP
-
-### Step 1: Buat Google Spreadsheet
-
-1. Buka [Google Sheets](https://sheets.google.com)
-2. Buat spreadsheet baru
-3. Salin **Spreadsheet ID** dari URL:
+### Step 1: Create Google Spreadsheet
+1. Open [sheets.google.com](https://sheets.google.com)
+2. Create new spreadsheet
+3. Find SPREADSHEET_ID in URL:
    ```
-   https://docs.google.com/spreadsheets/d/[SPREADSHEET_ID]/edit
+   https://docs.google.com/spreadsheets/d/[ID_HERE]/edit
    ```
 
-### Step 2: Setup Google Apps Script
-
-1. Di spreadsheet, buka **Tools → Apps Script**
-2. Buat project baru akan terbuka
-3. Hapus code template yang ada
-4. Copy-paste seluruh code dari `Code.gs`
-5. Ganti `YOUR_SPREADSHEET_ID` dengan ID spreadsheet Anda:
+### Step 2: Create Google Apps Script Project
+1. In spreadsheet: **Tools → Apps Script**
+2. Delete template code
+3. Copy entire **Code.gs** file (paste in editor)
+4. Find line 5 and update:
    ```javascript
    const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID';
+   // Replace with your ID from Step 1
    ```
 
-### Step 3: Inisialisasi Spreadsheet
+### Step 3: Initialize Database
+1. Click **Run** button (▶️)
+2. Select function: `initializeSpreadsheet`
+3. Click **Run**
+4. Check **Logs** (View → Logs) for success ✓
 
-1. Di Apps Script, jalankan function `initializeSpreadsheet()`:
-   - Klik tombol ▶️ (Run)
-   - Pilih function: `initializeSpreadsheet`
-   - Tunggu selesai (akan membuat 3 sheets otomatis)
+This creates 3 sheets automatically:
+- **USERS** - User accounts
+- **CHATS** - Chat history
+- **DALIL** - Islamic references
 
-2. Refresh spreadsheet Anda - sekarang sudah ada sheets: USERS, CHATS, DALIL
+### Step 4: Setup OpenAI API
+1. Go to [platform.openai.com](https://platform.openai.com)
+2. Create account if needed
+3. API keys → Create new key
+4. Copy the key (don't lose it!)
 
-### Step 4: Setup AI API
+In Apps Script:
+1. Find function `setAPIKey()`
+2. Replace `'YOUR_API_KEY'` with your actual key
+3. Click **Run**
 
-#### Opsi A: Gunakan OpenAI
+### Step 5: Deploy as Web App
+1. **Deploy** → **New Deployment**
+2. Select type: **Web app**
+3. Execute as: Your Google Account
+4. Who has access: **Anyone**
+5. Click **Deploy**
+6. Copy the URL (your GAS_API_URL)
 
-1. Buka [OpenAI Platform](https://platform.openai.com)
-2. Buat API key baru
-3. Di Apps Script, jalankan function `setAPIKey()`:
-   - Ubah `YOUR_API_KEY` dengan API key OpenAI Anda
-   - Klik ▶️ (Run)
-
-#### Opsi B: Gunakan Provider Lain
-
-Modifikasi `callAIAPI()` function untuk provider Anda (Claude, Gemini, dll)
-
-### Step 5: Deploy sebagai Web App
-
-1. Di Apps Script, klik **Deploy → New Deployment**
-2. Pilih type: **Web app**
-3. Konfigurasi:
-   - Execute as: Akun Google Anda
-   - Who has access: **Anyone**
-4. Klik **Deploy**
-5. Salin URL deployment - ini adalah `GAS_API_URL` Anda
-
-**Contoh URL:**
-```
-https://script.google.com/macros/d/YOUR_SCRIPT_ID/usw
-```
-
-5. Update di frontend `js/app.js`:
-   ```javascript
-   const GAS_API_URL = 'YOUR_GAS_DEPLOYMENT_URL';
-   ```
-
-## 🔐 KEAMANAN
-
-### API Key Management
-- **Jangan** simpan API key di Code.gs
-- Gunakan `PropertiesService` untuk store API key
-- Function `setAPIKey()` untuk setup
-
-### Password Security
-- Semua password di-hash dengan SHA-256
-- Password asli tidak pernah disimpan
-- Validasi dilakukan pada server
-
-### CORS Headers
-- Semua response include CORS headers
-- Mendukung cross-origin requests
-- Function `doOptions()` handle preflight requests
-
-## 📊 FITUR DETAIL
-
-### 1. Registration
-```
-POST request:
-{
-  "action": "register",
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-Response:
-{
-  "success": true,
-  "data": { "user_id": "user_123..." },
-  "message": "Registrasi berhasil"
-}
-```
-
-- Validasi email format
-- Password minimal 6 karakter
-- Email must be unique
-- Auto-generate unique user_id
-
-### 2. Login
-```
-POST request:
-{
-  "action": "login",
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-Response:
-{
-  "success": true,
-  "data": { "user_id": "user_123..." },
-  "message": "Login berhasil"
-}
-```
-
-- Verifikasi email & password
-- Return user_id untuk session
-
-### 3. Chat dengan RAG
-```
-POST request:
-{
-  "action": "chat",
-  "user_id": "user_123...",
-  "message": "Bagaimana cara berwudhu?"
-}
-
-Response:
-{
-  "success": true,
-  "data": { "response": "Wudhu adalah..." },
-  "message": "Sukses"
-}
-```
-
-**Process:**
-1. Validasi user_id
-2. Reset daily_count jika hari baru
-3. Cek daily limit (10 pesan/hari untuk free user)
-4. Increment daily_count
-5. Ambil 5 chat terakhir
-6. Search dalil relevan from DALIL sheet
-7. Build conversation dengan system prompt
-8. Call AI API
-9. Save ke CHATS sheet
-10. Return response
-
-### 4. Daily Limit
-- **Free users**: 10 chat per hari
-- Reset otomatis tengah malam (UTC)
-- Counter di kolom `daily_count`
-- Last reset date di `last_reset`
-
-### 5. RAG (Retrieval Augmented Generation)
-- Search keywords di DALIL sheet
-- Match dari kolom `kata_kunci` dan `teks`
-- Return top 5 referensi terbaik
-- Include dalam system prompt
-
-### 6. Anti-Hallucination
-System prompt include:
-- HANYA jawab dari referensi yang diberikan
-- JANGAN membuat ayat/hadis baru
-- Jika referensi tidak cukup → katakan jelas
-- JANGAN keluarkan fatwa final
-- Arahkan ke ulama untuk kasus sensitif
-- Jelaskan perbedaan mazhab dengan netral
-
-## 🧪 TESTING
-
-### Test di Apps Script Editor
-
+### Step 6: Update Frontend
+In **app.js**, line 2:
 ```javascript
-// Test Register
-testRegister();
-
-// Test Login
-testLogin();
-
-// View logs
-// Klik View → Logs
+const GAS_API_URL = 'YOUR_DEPLOYMENT_URL_HERE';
 ```
 
-### Test dengan Frontend
-
-1. Update `GAS_API_URL` di `js/app.js`
-2. Buka `http://localhost:8000` (local server)
-3. Test registration
-4. Test login
-5. Test chat
-
-### Test dengan Postman
-
-```
-POST: [YOUR_GAS_URL]
-Headers: Content-Type: application/json
-
-Body:
-{
-  "action": "register",
-  "email": "test@test.com",
-  "password": "test123"
-}
-```
-
-## 🛠️ TROUBLESHOOTING
-
-### Error: "SPREADSHEET_ID tidak valid"
-- Update SPREADSHEET_ID di line 5 Code.gs
-- Pastikan spreadsheet ID benar dari URL
-
-### Error: "API key tidak dikonfigurasi"
-- Jalankan function `setAPIKey()`
-- Pastikan API key OpenAI valid
-
-### Error: CORS issue
-- Backend sudah include CORS headers
-- Pastikan frontend mengirim JSON
-
-### Chat tidak menyimpan di history
-- Check CHATS sheet - ada 4 kolom?
-- Jalankan `initializeSpreadsheet()` lagi
-
-### Daily limit tidak reset
-- Check `last_reset` di USERS sheet
-- System auto-reset saat hari baru
-
-## 📈 MAINTENANCE
-
-### Monitor penggunaan
-- Buka CHATS sheet
-- Review conversation logs
-- Monitor daily_count per user
-
-### Update DALIL references
-- Tambah row baru ke DALIL sheet
-- Format: id, sumber, referensi, teks, kata_kunci
-- Otomatis di-index untuk search
-
-### Backup
-- Download spreadsheet secara berkala
-- Export sebagai CSV untuk arsip
-
-## 🎯 NEXT STEPS
-
-1. ✅ Copy Code.gs ke Apps Script
-2. ✅ Setup SPREADSHEET_ID
-3. ✅ Jalankan initializeSpreadsheet()
-4. ✅ Setup AI API key
-5. ✅ Deploy sebagai Web App
-6. ✅ Dapatkan Web App URL
-7. ✅ Update frontend GAS_API_URL
-8. ✅ Test lengkap
-9. ✅ Deploy frontend ke GitHub Pages
-10. ✅ Production monitoring
-
-## 🔗 RESOURCES
-
-- [Google Apps Script Documentation](https://developers.google.com/apps-script)
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [Spreadsheet API Reference](https://developers.google.com/sheets/api)
+Replace with actual URL from Step 5.
 
 ---
 
-**Created for AI Feisty - Islamic AI Assistant**
+## 📊 Spreadsheet Structure
+
+### USERS Sheet
+```
+| user_id | email | password_hash | role | daily_count | last_reset |
+```
+- Stores user accounts
+- password_hash: SHA-256 encrypted
+- daily_count: Resets each day
+- role: "free" or "premium"
+
+### CHATS Sheet
+```
+| user_id | role | message | timestamp |
+```
+- All chat messages logged here
+- role: "user" or "assistant"
+- Used for chat history retrieval
+- Helps AI maintain context
+
+### DALIL Sheet
+```
+| id | sumber | referensi | teks | kata_kunci |
+```
+- Islamic references database
+- sumber: Source (Alquran, Hadis, Tafsir)
+- referensi: Specific verse/hadith
+- teks: Full text
+- kata_kunci: Keywords for search (comma separated)
+
+---
+
+## 🔧 Configuration
+
+### In Code.gs:
+```javascript
+Line 5:  SPREADSHEET_ID = 'YOUR_ID'
+Line 8:  AI_API_URL = 'https://api.openai.com/v1/chat/completions'
+Line 17: DAILY_LIMIT_FREE = 10 (messages/day)
+Line 18: CHAT_HISTORY_LIMIT = 5 (messages to include)
+```
+
+### In setAPIKey():
+```javascript
+Replace 'YOUR_API_KEY' with actual OpenAI API key
+```
+
+---
+
+## 📈 Features
+
+✅ **User Management**
+- Register new users
+- SHA-256 password hashing
+- Daily message counter
+- Auto-reset at midnight
+
+✅ **Chat System**
+- Send/receive messages
+- Last 5 messages context
+- Real-time AI responses
+- Error handling & logging
+
+✅ **RAG (Retrieval Augmented Generation)**
+- Search DALIL sheet for relevant references
+- Keyword matching algorithm
+- Top 5 results included in prompt
+- Prevents AI hallucination
+
+✅ **Anti-Hallucination**
+- Strict system prompt
+- Only answer from provided references
+- Tell user when no dalil available
+- Refuse to create fake hadith
+
+✅ **CORS Headers**
+- Supports GitHub Pages frontend
+- Allows cross-origin requests
+- Preflight response headers
+
+---
+
+## 🧪 Testing
+
+### Test Register
+```javascript
+testRegister();
+// Check Logs for output
+```
+
+### Test Login
+```javascript
+testLogin();
+// Check Logs for output
+```
+
+### Add Sample Data
+```javascript
+importSampleDaulData();
+// Adds 5 sample Islamic references
+```
+
+### View Daily Report
+```javascript
+dailyUsageReport();
+// Shows usage statistics
+```
+
+---
+
+## 🐛 Common Issues
+
+### "Spreadsheet not found"
+- Check SPREADSHEET_ID is correct
+- Paste ID from URL, not full URL
+
+### "API key error"
+- Run `setAPIKey()` function
+- Use actual OpenAI API key
+- Check key has API access
+
+### "CORS error" in browser
+- Re-deploy Web App (Deploy menu)
+- Check "Who has access" is "Anyone"
+- Clear browser cache
+
+### "Daily limit not working"
+- Check USERS sheet has columns
+- Verify `last_reset` column exists
+- Run `initializeSpreadsheet()` again
+
+---
+
+## 🔐 Security Best Practices
+
+1. **API Key**: Store in PropertiesService, never in code
+2. **Password**: Always hash before storing
+3. **CORS**: Allow production domain only
+4. **Validation**: Validate all inputs on backend
+5. **Logging**: Log suspicious activities
+6. **HTTPS**: Enforce in production
+
+---
+
+## 📊 Database Schema Details
+
+### USERS Table
+```
+Row 1: Headers
+Row 2+: User data
+
+Column A: user_id (unique) → Format: user_TIMESTAMP_RANDOM
+Column B: email (unique) → Format: name@domain.com
+Column C: password_hash → SHA-256 + Base64
+Column D: role → "free" or "premium"
+Column E: daily_count → Integer (0-10 for free)
+Column F: last_reset → Date format YYYY-MM-DD
+```
+
+### CHATS Table
+```
+Row 1: Headers
+Row 2+: Chat messages
+
+Column A: user_id → Reference to USERS.user_id
+Column B: role → "user" or "assistant"
+Column C: message → Text content
+Column D: timestamp → ISO format (2026-02-15T10:30:00Z)
+```
+
+### DALIL Table
+```
+Row 1: Headers
+Row 2+: Islamic references
+
+Column A: id → Unique identifier (1, 2, 3...)
+Column B: sumber → Source name (Alquran, Hadis, Tafsir)
+Column C: referensi → Citation (Al-Baqarah: 183, Shahih Bukhari 1)
+Column D: teks → Full text of verse/hadith
+Column E: kata_kunci → Keywords comma-separated
+```
+
+---
+
+## 🚀 Deployment Checklist
+
+- [ ] Google Spreadsheet created
+- [ ] SPREADSHEET_ID added to Code.gs
+- [ ] Apps Script project created
+- [ ] Code.gs copied
+- [ ] initializeSpreadsheet() executed
+- [ ] 3 sheets created (USERS, CHATS, DALIL)
+- [ ] OpenAI API key obtained
+- [ ] setAPIKey() executed
+- [ ] Code.gs deployed as Web App
+- [ ] Deployment URL copied
+- [ ] GAS_API_URL updated in app.js
+- [ ] Frontend pushed to GitHub
+- [ ] GitHub Pages enabled
+- [ ] Test: Register → Login → Chat
+
+---
+
+## 📞 Support
+
+- **Apps Script Docs**: https://developers.google.com/apps-script
+- **Sheets API**: https://developers.google.com/sheets/api
+- **OpenAI API**: https://platform.openai.com/docs
+
+---
+
+**Setup Complete!** 🎉
+
+Your AI Feisty backend is ready to handle requests.

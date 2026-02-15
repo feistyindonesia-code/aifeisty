@@ -1,14 +1,10 @@
 // API Configuration
-const GAS_API_URL = 'https://script.google.com/macros/d/YOUR_GAS_DEPLOYMENT_ID/usercontent'; // Change to your GAS URL
+const GAS_API_URL = 'https://script.google.com/macros/d/YOUR_GAS_DEPLOYMENT_ID/usw';
 
 // ======================
 // AUTH FUNCTIONS
 // ======================
 
-/**
- * Check if user is authenticated
- * If not, redirect to login page
- */
 function checkAuth() {
     const userId = localStorage.getItem('user_id');
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
@@ -22,20 +18,15 @@ function checkAuth() {
     }
 }
 
-/**
- * Login user
- */
 async function login() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     const loginBtn = document.getElementById('loginBtn');
     const errorDiv = document.getElementById('loginError');
     
-    // Clear previous errors
     errorDiv.classList.add('hidden');
     errorDiv.textContent = '';
     
-    // Validation
     if (!email || !password) {
         showError(errorDiv, 'Please fill in all fields');
         return;
@@ -46,9 +37,8 @@ async function login() {
         return;
     }
     
-    // Disable button and show loading
     loginBtn.disabled = true;
-    loginBtn.textContent = '...'
+    loginBtn.textContent = '...';
     
     try {
         const response = await fetch(GAS_API_URL, {
@@ -66,9 +56,7 @@ async function login() {
         const data = await response.json();
         
         if (data.success) {
-            // Save user_id to localStorage
-            localStorage.setItem('user_id', data.user_id);
-            // Redirect to chat
+            localStorage.setItem('user_id', data.data.user_id);
             window.location.href = 'chat.html';
         } else {
             showError(errorDiv, data.message || 'Login failed. Please try again.');
@@ -82,9 +70,6 @@ async function login() {
     }
 }
 
-/**
- * Register new user
- */
 async function register() {
     const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
@@ -92,11 +77,9 @@ async function register() {
     const registerBtn = document.getElementById('registerBtn');
     const errorDiv = document.getElementById('registerError');
     
-    // Clear previous errors
     errorDiv.classList.add('hidden');
     errorDiv.textContent = '';
     
-    // Validation
     if (!email || !password || !confirmPassword) {
         showError(errorDiv, 'Please fill in all fields');
         return;
@@ -117,7 +100,6 @@ async function register() {
         return;
     }
     
-    // Disable button and show loading
     registerBtn.disabled = true;
     registerBtn.textContent = '...';
     
@@ -137,10 +119,8 @@ async function register() {
         const data = await response.json();
         
         if (data.success) {
-            // Show success message and switch to login
             alert('Account created successfully! Please login.');
             switchTab('login');
-            // Clear form
             document.getElementById('registerEmail').value = '';
             document.getElementById('registerPassword').value = '';
             document.getElementById('registerConfirm').value = '';
@@ -156,9 +136,6 @@ async function register() {
     }
 }
 
-/**
- * Logout user
- */
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
         localStorage.removeItem('user_id');
@@ -170,16 +147,12 @@ function logout() {
 // CHAT FUNCTIONS
 // ======================
 
-/**
- * Send message to AI
- */
 async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     const message = messageInput.value.trim();
     const sendBtn = document.getElementById('sendBtn');
     const errorDiv = document.getElementById('errorMessage');
     
-    // Clear error
     errorDiv.classList.add('hidden');
     document.getElementById('errorText').textContent = '';
     
@@ -191,15 +164,11 @@ async function sendMessage() {
         return;
     }
     
-    // Add user message to chat
     appendMessage('user', message);
     messageInput.value = '';
     messageInput.style.height = 'auto';
     
-    // Show loading indicator
     const loadingId = appendMessage('ai', 'loading');
-    
-    // Disable send button
     sendBtn.disabled = true;
     
     try {
@@ -216,21 +185,15 @@ async function sendMessage() {
         });
         
         const data = await response.json();
-        
-        // Remove loading message
         removeMessage(loadingId);
         
         if (data.success) {
-            // Add AI response
-            appendMessage('ai', data.response);
+            appendMessage('ai', data.data.response);
         } else {
-            // Handle specific errors
             let errorMessage = data.message || 'An error occurred. Please try again.';
-            
             if (data.message && data.message.includes('daily')) {
                 errorMessage = 'Daily message limit reached. Please try again tomorrow.';
             }
-            
             showError(errorDiv, errorMessage);
             appendMessage('ai', `Error: ${errorMessage}`);
         }
@@ -246,12 +209,6 @@ async function sendMessage() {
     }
 }
 
-/**
- * Append message to chat
- * @param {string} role - 'user' or 'ai'
- * @param {string} text - Message text or 'loading' for loading state
- * @returns {string} Message ID for later removal if needed
- */
 function appendMessage(role, text) {
     const chatContainer = document.getElementById('chatContainer');
     const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -284,7 +241,6 @@ function appendMessage(role, text) {
     
     chatContainer.appendChild(messageDiv);
     
-    // Auto scroll to bottom
     setTimeout(() => {
         chatContainer.parentElement.scrollTop = chatContainer.parentElement.scrollHeight;
     }, 0);
@@ -292,10 +248,6 @@ function appendMessage(role, text) {
     return messageId;
 }
 
-/**
- * Remove message from chat
- * @param {string} messageId - ID of message to remove
- */
 function removeMessage(messageId) {
     const messageElement = document.getElementById(messageId);
     if (messageElement) {
@@ -307,10 +259,6 @@ function removeMessage(messageId) {
 // UI FUNCTIONS
 // ======================
 
-/**
- * Switch between login and register tabs
- * @param {string} tab - 'login' or 'register'
- */
 function switchTab(tab) {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -333,16 +281,10 @@ function switchTab(tab) {
         registerTab.classList.remove('text-gray-500');
     }
     
-    // Clear errors
     document.getElementById('loginError').classList.add('hidden');
     document.getElementById('registerError').classList.add('hidden');
 }
 
-/**
- * Show error message
- * @param {HTMLElement} errorDiv - Error container element
- * @param {string} message - Error message
- */
 function showError(errorDiv, message) {
     errorDiv.textContent = message;
     errorDiv.classList.remove('hidden');
@@ -352,21 +294,11 @@ function showError(errorDiv, message) {
 // UTILITY FUNCTIONS
 // ======================
 
-/**
- * Validate email format
- * @param {string} email - Email to validate
- * @returns {boolean} True if valid email
- */
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
 
-/**
- * Escape HTML special characters
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
 function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -378,5 +310,4 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Initialize auth check on page load
 document.addEventListener('DOMContentLoaded', checkAuth);
