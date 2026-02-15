@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Feisty - Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-white h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-lg">F</span>
+            </div>
+            <h1 class="text-xl font-bold text-gray-900">AI Feisty</h1>
+        </div>
+        <button 
+            onclick="logout()"
+            class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+            Logout
+        </button>
+    </header>
+
+    <!-- Chat Container -->
+    <div class="flex-1 overflow-y-auto bg-white">
+        <div id="chatContainer" class="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+            <!-- Initial Message -->
+            <div class="text-center py-10">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Hello! 👋</h2>
+                <p class="text-gray-500">Start a conversation with AI Feisty</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="border-t border-gray-200 bg-white px-4 sm:px-6 py-4 shadow-lg">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex gap-3">
+                <textarea 
+                    id="messageInput"
+                    placeholder="Type your message... (Shift + Enter for new line)"
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                    rows="1"
+                    style="max-height: 120px;"
+                ></textarea>
+                <button 
+                    id="sendBtn"
+                    onclick="sendMessage()"
+                    class="px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-max"
+                    title="Send message (Enter)"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <span id="errorText"></span>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Initialize chat page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            
+            // Auto-resize textarea
+            const textarea = document.getElementById('messageInput');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Send on Enter, new line on Shift+Enter
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Focus input on load
+            textarea.focus();
+        });
+    </script>
+</body>
+</html>

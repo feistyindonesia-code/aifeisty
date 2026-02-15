@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Feisty</title>
+    <script>
+        // Redirect 404s to the base URL for SPA routing
+        var pathSegments = window.location.pathname.split('/').filter(p => p);
+        var repo = pathSegments[0];
+        
+        if (window.location.pathname !== '/' && window.location.pathname !== '/' + repo + '/') {
+            window.location.href = '/' + repo + '/';
+        }
+    </script>
+</head>
+<body>
+</body>
+</html>
