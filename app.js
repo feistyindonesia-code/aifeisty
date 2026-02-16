@@ -1,5 +1,5 @@
 // API Configuration
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwEP0TNXvnKD3gf3-mQJGuuHyDLb81-RFEr-AVh4kfS9_DQH1Ds6dj845MOFJXHBJfwbw/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzSnYQA0ItMbEqlJy6FbAt-sVuoWNo7qvI4heAnOv3IpqeGS3nLgpKUFLSgRSR5eFXaeg/exec';
 
 // ======================
 // AUTH FUNCTIONS
