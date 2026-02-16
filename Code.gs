@@ -4,7 +4,9 @@
 // ==========================================
 
 const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // WAJIB: Ganti dengan ID Spreadsheet Anda
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+// Model yang tersedia: gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp
+const GEMINI_MODEL = 'gemini-1.5-flash'; // Ganti dengan model yang diinginkan
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent';
 
 const SHEET_USERS = 'USERS';
 const SHEET_CHATS = 'CHATS';
@@ -556,19 +558,19 @@ function callAIAPI(messages) {
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          threshold: "BLOCK_NONE"
         },
         {
           category: "HARM_CATEGORY_HATE_SPEECH",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          threshold: "BLOCK_NONE"
         },
         {
           category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          threshold: "BLOCK_NONE"
         },
         {
           category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          threshold: "BLOCK_NONE"
         }
       ]
     };
@@ -583,34 +585,87 @@ function callAIAPI(messages) {
       muteHttpExceptions: true
     };
 
+    Logger.log('Calling Gemini API with payload: ' + JSON.stringify(payload).substring(0, 500));
+    
     const response = UrlFetchApp.fetch(GEMINI_API_URL, options);
-    const result = JSON.parse(response.getContentText());
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+    
+    Logger.log('Gemini API Response Code: ' + responseCode);
+    Logger.log('Gemini API Response: ' + responseText.substring(0, 1000));
 
-    if (response.getResponseCode() === 200) {
-      if (result.candidates && result.candidates[0] && result.candidates[0].content) {
-        const aiText = result.candidates[0].content.parts[0].text;
-        return {
-          success: true,
-          text: aiText
-        };
-      } else {
-        return {
-          success: false,
-          error: 'Respons tidak valid dari Gemini API'
-        };
-      }
-    } else {
-      Logger.log('Gemini API Error Response: ' + JSON.stringify(result));
+    // Check if response is empty
+    if (!responseText || responseText.trim() === '') {
       return {
         success: false,
-        error: result.error?.message || 'API error: ' + response.getResponseCode()
+        error: 'Gemini API mengembalikan response kosong. Coba lagi.'
+      };
+    }
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      Logger.log('JSON Parse Error: ' + parseError);
+      return {
+        success: false,
+        error: 'Gagal parse response dari Gemini: ' + responseText.substring(0, 200)
+      };
+    }
+
+    if (responseCode === 200) {
+      // Check for valid response structure
+      if (result.candidates && result.candidates.length > 0) {
+        const candidate = result.candidates[0];
+        
+        // Check if content was blocked
+        if (candidate.finishReason === 'SAFETY') {
+          return {
+            success: false,
+            error: 'Respons diblokir oleh safety filter. Coba pertanyaan lain.'
+          };
+        }
+        
+        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+          const aiText = candidate.content.parts[0].text;
+          return {
+            success: true,
+            text: aiText
+          };
+        }
+      }
+      
+      // Check for prompt feedback (error)
+      if (result.promptFeedback && result.promptFeedback.blockReason) {
+        return {
+          success: false,
+          error: 'Prompt diblokir: ' + result.promptFeedback.blockReason
+        };
+      }
+      
+      Logger.log('Unexpected Gemini response structure: ' + JSON.stringify(result));
+      return {
+        success: false,
+        error: 'Format response tidak valid dari Gemini API'
+      };
+    } else {
+      // Handle API errors
+      let errorMessage = 'API error: ' + responseCode;
+      if (result.error && result.error.message) {
+        errorMessage = result.error.message;
+      }
+      Logger.log('Gemini API Error: ' + errorMessage);
+      return {
+        success: false,
+        error: errorMessage
       };
     }
   } catch(error) {
-    Logger.log('Gemini API error: ' + error);
+    Logger.log('Gemini API error: ' + error.toString());
+    Logger.log('Stack trace: ' + error.stack);
     return {
       success: false,
-      error: error.toString()
+      error: 'Error: ' + error.toString()
     };
   }
 }
