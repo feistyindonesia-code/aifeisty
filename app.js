@@ -1,6 +1,6 @@
 // API Configuration
 // Ganti dengan URL deployment Google Apps Script Anda
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxUTRtp49EnxnK0jENDQQgIUzIrdE-AAaV7rXR0OC3ALA8DT-NcoBijdtHcH8U_pX-MeQ/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyc8pVUDpR1hYqOp1NUWiyTp2I0Y5T-GE44Izxwt0WPrC7vHQwnQjzc5dH8dB5l6OmhaA/exec';
 
 // ======================
 // API HELPER - JSONP (CORS Bypass)
