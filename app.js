@@ -1,5 +1,38 @@
 // API Configuration
-const GAS_API_URL = 'https://script.google.com/macros/d/YOUR_GAS_DEPLOYMENT_ID/usw';
+// Ganti dengan URL deployment Google Apps Script Anda
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzSnYQA0ItMbEqlJy6FbAt-sVuoWNo7qvI4heAnOv3IpqeGS3nLgpKUFLSgRSR5eFXaeg/exec';
+
+// ======================
+// API HELPER - CORS Compatible
+// ======================
+
+/**
+ * Mengirim request ke Google Apps Script dengan CORS handling
+ * Menggunakan GET dengan parameter untuk menghindari CORS preflight
+ */
+async function gasRequest(payload) {
+    // Encode payload sebagai URL parameter untuk menghindari CORS preflight
+    const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+    const url = `${GAS_API_URL}?payload=${encodedPayload}`;
+    
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('GAS Request error:', error);
+        throw error;
+    }
+}
 
 // ======================
 // AUTH FUNCTIONS
@@ -41,19 +74,11 @@ async function login() {
     loginBtn.textContent = '...';
     
     try {
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'login',
-                email: email,
-                password: password
-            })
+        const data = await gasRequest({
+            action: 'login',
+            email: email,
+            password: password
         });
-        
-        const data = await response.json();
         
         if (data.success) {
             localStorage.setItem('user_id', data.data.user_id);
@@ -104,19 +129,11 @@ async function register() {
     registerBtn.textContent = '...';
     
     try {
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'register',
-                email: email,
-                password: password
-            })
+        const data = await gasRequest({
+            action: 'register',
+            email: email,
+            password: password
         });
-        
-        const data = await response.json();
         
         if (data.success) {
             alert('Account created successfully! Please login.');
@@ -172,19 +189,12 @@ async function sendMessage() {
     sendBtn.disabled = true;
     
     try {
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'chat',
-                user_id: userId,
-                message: message
-            })
+        const data = await gasRequest({
+            action: 'chat',
+            user_id: userId,
+            message: message
         });
         
-        const data = await response.json();
         removeMessage(loadingId);
         
         if (data.success) {

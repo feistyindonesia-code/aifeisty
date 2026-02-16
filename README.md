@@ -1,6 +1,6 @@
 # AI FEISTY - Islamic AI Chat Application
 
-**Modern Frontend + Google Apps Script Backend + RAG System**
+**Modern Frontend + Google Apps Script Backend + RAG System + Gemini AI**
 
 ## 🎯 Quick Start (20 minutes)
 
@@ -10,17 +10,17 @@
 2. Copy SPREADSHEET_ID from URL
 3. Open Apps Script: Tools > Apps Script
 4. Copy Code.gs content
-5. Update SPREADSHEET_ID in line 5
+5. Update SPREADSHEET_ID in line 6
 6. Run: initializeSpreadsheet()
-7. Get OpenAI API key from platform.openai.com
-8. Run: setAPIKey() with your API key
+7. Get Gemini API key from https://aistudio.google.com/app/apikey (FREE!)
+8. Run: setGeminiAPIKey() with your API key
 9. Deploy: Deploy > New Deployment > Web app
 10. Copy deployment URL
 ```
 
 ### 2. Frontend Setup
 ```
-1. Update GAS_API_URL in app.js (line 2)
+1. Update GAS_API_URL in app.js (line 3)
 2. Push to GitHub
 3. Enable GitHub Pages (Settings > Pages)
 ```
@@ -38,7 +38,7 @@
 ├── app.js ......................... Frontend JavaScript
 ├── style.css ...................... Custom styling
 ├── Code.gs ........................ Backend (Google Apps Script)
-├── HelperFunctions.gs ........... Helper functions
+├── HelperFunctions.gs ............. Helper functions
 ├── 404.html ....................... GitHub Pages routing
 ├── .gitignore ..................... Security
 └── README.md ...................... This file
@@ -118,7 +118,7 @@ git push -u origin main
 
 - **Frontend**: HTML5, Tailwind CSS, Vanilla JavaScript
 - **Backend**: Google Apps Script, Google Sheets
-- **AI**: OpenAI API (gpt-4o-mini)
+- **AI**: Google Gemini AI (gemini-2.0-flash) - FREE tier available!
 - **Hosting**: GitHub Pages (frontend), Google Apps Script (backend)
 
 ## 📊 Spreadsheet Structure
@@ -137,10 +137,10 @@ git push -u origin main
 - **Frontend**: FREE (GitHub Pages)
 - **Backend**: FREE (Google Apps Script)
 - **Database**: FREE (Google Sheets)
-- **AI API**: ~$0.01 per chat with gpt-4o-mini
+- **AI API**: FREE! (Gemini has generous free tier)
 - **Custom Domain**: Optional ($12/year)
 
-Total: FREE tier available!
+Total: **100% FREE** with Gemini!
 
 ## ❓ Need Help?
 
@@ -149,5 +149,5 @@ Check documentation files included in repo.
 ---
 
 **Status**: ✅ Production Ready  
-**Version**: 1.0  
+**Version**: 2.0 (Gemini AI)  
 **License**: MIT

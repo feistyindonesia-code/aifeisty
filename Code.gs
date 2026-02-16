@@ -1,10 +1,10 @@
 // ==========================================
 // AI FEISTY - GOOGLE APPS SCRIPT BACKEND
-// Islamic AI Assistant with RAG
+// Islamic AI Assistant with RAG (Gemini AI)
 // ==========================================
 
 const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // WAJIB: Ganti dengan ID Spreadsheet Anda
-const AI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 const SHEET_USERS = 'USERS';
 const SHEET_CHATS = 'CHATS';
@@ -19,7 +19,14 @@ function doPost(e) {
     // Ensure sheets exist automatically
     ensureSheetsExist();
     
-    const payload = JSON.parse(e.postData.contents);
+    // Handle both JSON and text/plain content types for CORS compatibility
+    let payload;
+    if (e.postData && e.postData.contents) {
+      payload = JSON.parse(e.postData.contents);
+    } else {
+      return JsonResponse(false, null, 'No data received');
+    }
+    
     const action = payload.action;
 
     switch(action) {
@@ -36,6 +43,37 @@ function doPost(e) {
     Logger.log('Error in doPost: ' + error);
     return JsonResponse(false, null, 'Server error: ' + error.toString());
   }
+}
+
+// doGet for testing and CORS support
+function doGet(e) {
+  const action = e.parameter.action;
+  
+  if (action === 'test') {
+    return JsonResponse(true, { status: 'ok', timestamp: new Date().toISOString() }, 'API is working');
+  }
+  
+  // Handle JSONP-style requests for CORS bypass
+  if (e.parameter.payload) {
+    try {
+      const payload = JSON.parse(e.parameter.payload);
+      
+      switch(payload.action) {
+        case 'register':
+          return handleRegister(payload);
+        case 'login':
+          return handleLogin(payload);
+        case 'chat':
+          return handleChat(payload);
+        default:
+          return JsonResponse(false, null, 'Invalid action');
+      }
+    } catch(error) {
+      return JsonResponse(false, null, 'Parse error: ' + error.toString());
+    }
+  }
+  
+  return JsonResponse(false, null, 'Use POST method or provide action parameter');
 }
 
 function doOptions(e) {
@@ -340,52 +378,96 @@ function buildConversation(systemPrompt, chatHistory, userMessage) {
 
 function callAIAPI(messages) {
   try {
-    const apiKey = PropertiesService.getScriptProperties().getProperty('AI_API_KEY');
+    const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
     
     if (!apiKey) {
       return {
         success: false,
-        error: 'API key tidak dikonfigurasi'
+        error: 'API key tidak dikonfigurasi. Jalankan setGeminiAPIKey() dengan API key Anda.'
       };
     }
 
+    // Convert OpenAI-style messages to Gemini format
+    const geminiContents = [];
+    let systemInstruction = '';
+    
+    for (const msg of messages) {
+      if (msg.role === 'system') {
+        systemInstruction = msg.content;
+      } else {
+        geminiContents.push({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        });
+      }
+    }
+
     const payload = {
-      model: 'gpt-4o-mini',
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: 1500,
-      top_p: 0.95,
-      frequency_penalty: 0,
-      presence_penalty: 0.6
+      contents: geminiContents,
+      systemInstruction: {
+        parts: [{ text: systemInstruction }]
+      },
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1500,
+        topP: 0.95,
+        topK: 40
+      },
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        }
+      ]
     };
 
     const options = {
       method: 'post',
       contentType: 'application/json',
       headers: {
-        'Authorization': 'Bearer ' + apiKey
+        'x-goog-api-key': apiKey
       },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
 
-    const response = UrlFetchApp.fetch(AI_API_URL, options);
+    const response = UrlFetchApp.fetch(GEMINI_API_URL, options);
     const result = JSON.parse(response.getContentText());
 
     if (response.getResponseCode() === 200) {
-      const aiText = result.choices[0].message.content;
-      return {
-        success: true,
-        text: aiText
-      };
+      if (result.candidates && result.candidates[0] && result.candidates[0].content) {
+        const aiText = result.candidates[0].content.parts[0].text;
+        return {
+          success: true,
+          text: aiText
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Respons tidak valid dari Gemini API'
+        };
+      }
     } else {
+      Logger.log('Gemini API Error Response: ' + JSON.stringify(result));
       return {
         success: false,
-        error: result.error?.message || 'API error'
+        error: result.error?.message || 'API error: ' + response.getResponseCode()
       };
     }
   } catch(error) {
-    Logger.log('AI API error: ' + error);
+    Logger.log('Gemini API error: ' + error);
     return {
       success: false,
       error: error.toString()
@@ -459,7 +541,14 @@ function initializeSpreadsheet() {
   Logger.log('Spreadsheet initialized successfully');
 }
 
+function setGeminiAPIKey() {
+  // Ganti YOUR_GEMINI_API_KEY dengan API key dari Google AI Studio
+  // Dapatkan API key gratis di: https://aistudio.google.com/app/apikey
+  PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY');
+  Logger.log('Gemini API Key set successfully');
+}
+
+// Legacy function for backward compatibility
 function setAPIKey() {
-  PropertiesService.getScriptProperties().setProperty('AI_API_KEY', 'YOUR_API_KEY');
-  Logger.log('API Key set successfully');
+  setGeminiAPIKey();
 }
