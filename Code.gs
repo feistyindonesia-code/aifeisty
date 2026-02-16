@@ -45,12 +45,13 @@ function doPost(e) {
   }
 }
 
-// doGet for testing and CORS support
+// doGet for testing and CORS support with JSONP
 function doGet(e) {
   const action = e.parameter.action;
+  const callback = e.parameter.callback || 'handleResponse';
   
   if (action === 'test') {
-    return JsonResponse(true, { status: 'ok', timestamp: new Date().toISOString() }, 'API is working');
+    return JsonpResponse(callback, true, { status: 'ok', timestamp: new Date().toISOString() }, 'API is working');
   }
   
   // Handle JSONP-style requests for CORS bypass
@@ -60,20 +61,159 @@ function doGet(e) {
       
       switch(payload.action) {
         case 'register':
-          return handleRegister(payload);
+          return handleRegisterJsonp(payload, callback);
         case 'login':
-          return handleLogin(payload);
+          return handleLoginJsonp(payload, callback);
         case 'chat':
-          return handleChat(payload);
+          return handleChatJsonp(payload, callback);
         default:
-          return JsonResponse(false, null, 'Invalid action');
+          return JsonpResponse(callback, false, null, 'Invalid action');
       }
     } catch(error) {
-      return JsonResponse(false, null, 'Parse error: ' + error.toString());
+      return JsonpResponse(callback, false, null, 'Parse error: ' + error.toString());
     }
   }
   
-  return JsonResponse(false, null, 'Use POST method or provide action parameter');
+  return JsonpResponse(callback, false, null, 'Use POST method or provide action parameter');
+}
+
+// JSONP Response wrapper - returns JavaScript that calls the callback
+function JsonpResponse(callback, success, data, message) {
+  const jsonData = JSON.stringify({
+    success: success,
+    data: data,
+    message: message
+  });
+  
+  // Return as JavaScript (not JSON) - this bypasses CORS
+  const output = ContentService.createTextOutput(
+    callback + '(' + jsonData + ');'
+  );
+  output.setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return output;
+}
+
+// JSONP handlers
+function handleRegisterJsonp(payload, callback) {
+  try {
+    ensureSheetsExist();
+    
+    const email = payload.email?.trim().toLowerCase();
+    const password = payload.password;
+
+    if (!email || !password) {
+      return JsonpResponse(callback, false, null, 'Email dan password harus diisi');
+    }
+
+    if (password.length < 6) {
+      return JsonpResponse(callback, false, null, 'Password minimal 6 karakter');
+    }
+
+    if (!isValidEmail(email)) {
+      return JsonpResponse(callback, false, null, 'Format email tidak valid');
+    }
+
+    const existingUser = getUser(email);
+    if (existingUser) {
+      return JsonpResponse(callback, false, null, 'Email sudah terdaftar');
+    }
+
+    const passwordHash = hashPassword(password);
+    const userId = generateUserId();
+
+    const sheet = getSheetByName(SHEET_USERS);
+    if (!sheet) {
+      return JsonpResponse(callback, false, null, 'Database error');
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    sheet.appendRow([userId, email, passwordHash, 'free', 0, today]);
+
+    return JsonpResponse(callback, true, { user_id: userId }, 'Registrasi berhasil');
+  } catch(error) {
+    Logger.log('Register error: ' + error);
+    return JsonpResponse(callback, false, null, 'Registrasi gagal: ' + error.toString());
+  }
+}
+
+function handleLoginJsonp(payload, callback) {
+  try {
+    ensureSheetsExist();
+    
+    const email = payload.email?.trim().toLowerCase();
+    const password = payload.password;
+
+    if (!email || !password) {
+      return JsonpResponse(callback, false, null, 'Email dan password harus diisi');
+    }
+
+    const user = getUser(email);
+    if (!user) {
+      return JsonpResponse(callback, false, null, 'Email atau password salah');
+    }
+
+    const passwordHash = hashPassword(password);
+    if (user.passwordHash !== passwordHash) {
+      return JsonpResponse(callback, false, null, 'Email atau password salah');
+    }
+
+    return JsonpResponse(callback, true, { user_id: user.userId }, 'Login berhasil');
+  } catch(error) {
+    Logger.log('Login error: ' + error);
+    return JsonpResponse(callback, false, null, 'Login gagal: ' + error.toString());
+  }
+}
+
+function handleChatJsonp(payload, callback) {
+  try {
+    ensureSheetsExist();
+    
+    const userId = payload.user_id;
+    const userMessage = payload.message?.trim();
+
+    if (!userId || !userMessage) {
+      return JsonpResponse(callback, false, null, 'user_id dan message harus diisi');
+    }
+
+    if (userMessage.length > 2000) {
+      return JsonpResponse(callback, false, null, 'Pesan terlalu panjang (max 2000 karakter)');
+    }
+
+    const user = getUserById(userId);
+    if (!user) {
+      return JsonpResponse(callback, false, null, 'User tidak ditemukan');
+    }
+
+    resetDailyCountIfNeeded(user);
+
+    if (user.role === 'free' && user.dailyCount >= DAILY_LIMIT_FREE) {
+      return JsonpResponse(callback, false, null, 'Batas harian tercapai. Coba lagi besok.');
+    }
+
+    incrementDailyCount(userId);
+
+    const chatHistory = getLastMessages(userId, CHAT_HISTORY_LIMIT);
+    const relevantDalil = searchDalil(userMessage);
+
+    const systemPrompt = buildSystemPrompt(relevantDalil);
+    const messages = buildConversation(systemPrompt, chatHistory, userMessage);
+
+    const aiResponse = callAIAPI(messages);
+
+    if (!aiResponse.success) {
+      return JsonpResponse(callback, false, null, 'Gagal mendapat respons dari AI: ' + aiResponse.error);
+    }
+
+    const answer = aiResponse.text;
+
+    saveChatMessage(userId, 'user', userMessage);
+    saveChatMessage(userId, 'assistant', answer);
+
+    return JsonpResponse(callback, true, { response: answer }, 'Sukses');
+  } catch(error) {
+    Logger.log('Chat error: ' + error);
+    return JsonpResponse(callback, false, null, 'Terjadi kesalahan: ' + error.toString());
+  }
 }
 
 function doOptions(e) {

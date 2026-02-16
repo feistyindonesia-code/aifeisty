@@ -3,35 +3,59 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxUTRtp49EnxnK0jENDQQgIUzIrdE-AAaV7rXR0OC3ALA8DT-NcoBijdtHcH8U_pX-MeQ/exec';
 
 // ======================
-// API HELPER - CORS Compatible
+// API HELPER - JSONP (CORS Bypass)
 // ======================
 
 /**
- * Mengirim request ke Google Apps Script dengan CORS handling
- * Menggunakan GET dengan parameter untuk menghindari CORS preflight
+ * Mengirim request ke Google Apps Script menggunakan JSONP
+ * JSONP bypass CORS dengan menggunakan script tag
  */
-async function gasRequest(payload) {
-    // Encode payload sebagai URL parameter untuk menghindari CORS preflight
-    const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-    const url = `${GAS_API_URL}?payload=${encodedPayload}`;
-    
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'omit'
-        });
+let jsonpCounter = 0;
+
+function gasRequest(payload) {
+    return new Promise((resolve, reject) => {
+        // Buat callback name yang unik
+        const callbackName = 'jsonpCallback_' + (++jsonpCounter);
+        const timeoutMs = 30000; // 30 detik timeout
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Encode payload
+        const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+        
+        // Buat URL dengan callback
+        const url = `${GAS_API_URL}?callback=${callbackName}&payload=${encodedPayload}`;
+        
+        // Setup timeout
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error('Request timeout'));
+        }, timeoutMs);
+        
+        // Cleanup function
+        function cleanup() {
+            clearTimeout(timeoutId);
+            delete window[callbackName];
+            if (script && script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
         }
         
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('GAS Request error:', error);
-        throw error;
-    }
+        // Buat callback function global
+        window[callbackName] = function(data) {
+            cleanup();
+            resolve(data);
+        };
+        
+        // Buat script tag untuk JSONP
+        const script = document.createElement('script');
+        script.src = url;
+        script.onerror = function() {
+            cleanup();
+            reject(new Error('Network error'));
+        };
+        
+        // Append script ke document
+        document.head.appendChild(script);
+    });
 }
 
 // ======================
